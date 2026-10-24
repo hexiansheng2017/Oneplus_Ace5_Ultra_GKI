@@ -469,8 +469,10 @@ jobs:
             KSU_VERSION=$(expr $(git rev-list --count main) + 30700 2>/dev/null || echo 114514)
             echo "KSUVER=$KSU_VERSION" >> $GITHUB_ENV
             echo "ksuver=$KSU_VERSION" >> $GITHUB_OUTPUT
+            sed -i 's|^KSU_VERSION[[:space:]]*:=.*$|KSU_VERSION := 41068|' kernel/Makefile
+            grep -n "KSU_VERSION :=" kernel/Makefile || true
           else
-            curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/refs/heads/main/kernel/setup.sh" | bash -s v4.2.1-r2
+            curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/refs/heads/main/kernel/setup.sh" | bash -s builtin
             cd ./KernelSU
             GIT_COMMIT_HASH=$(git rev-parse --short=8 HEAD)
             echo "当前提交哈希: $GIT_COMMIT_HASH"
@@ -482,7 +484,7 @@ jobs:
                 tr -d '[:space:]')
               [ -n "$KSU_API_VERSION" ] && break || sleep 1
             done
-            [ -z "$KSU_API_VERSION" ] && KSU_API_VERSION="4.1.0"
+            [ -z "$KSU_API_VERSION" ] && KSU_API_VERSION="4.1.0" || true
             echo "KSU_API_VERSION=$KSU_API_VERSION" >> $GITHUB_ENV
             VERSION_DEFINITIONS=$'define get_ksu_version_full\nv\\$1-'"$GIT_COMMIT_HASH"$'-TG@qdykernel\nendef\n\nKSU_VERSION_API := '"$KSU_API_VERSION"$'\nKSU_VERSION_FULL := v'"$KSU_API_VERSION"$'-'"$GIT_COMMIT_HASH"$'-TG@qdykernel'
             
@@ -498,7 +500,9 @@ jobs:
             if ! [ "$KSU_VERSION" -eq 41068 ] 2>/dev/null; then KSU_VERSION=41068; fi
             echo "KSUVER=$KSU_VERSION" >> $GITHUB_ENV
             echo "ksuver=$KSU_VERSION" >> $GITHUB_OUTPUT
-            grep -A10 "REPO_OWNER" kernel/Makefile
+            sed -i 's|^KSU_VERSION[[:space:]]*:=.*$|KSU_VERSION := 41068|' kernel/Makefile
+            grep -n "KSU_VERSION :=" kernel/Makefile || true
+            grep -A10 "REPO_OWNER" kernel/Makefile || true
             grep "KSU_VERSION_FULL" kernel/Makefile
             echo "SukiSU版本号: v${KSU_API_VERSION}-${GIT_COMMIT_HASH}-TG@qdykernel"
           fi
