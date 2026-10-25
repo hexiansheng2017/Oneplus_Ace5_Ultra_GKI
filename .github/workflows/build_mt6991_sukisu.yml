@@ -604,6 +604,24 @@ jobs:
               patch -p1 -F 3 < hmbird_patch.patch
               echo "OGKI转换GKI_patch完成"
           fi
+      - name: 🔒 Ensure HMBIRD_SCHED enabled (确保风驰驱动真正编入)
+        run: |
+          cd kernel_workspace/common
+          CFG=arch/arm64/configs/gki_defconfig
+          echo "=== ENABLE_SCX=${{ env.ENABLE_SCX }} SCHED_FILE=${{ env.SCHED_FILE }} ==="
+          echo "--- defconfig: HMBIRD / SLIM_SCHED / SCHED_CLASS_EXT ---"
+          grep -n "HMBIRD\|SLIM_SCHED\|SCHED_CLASS_EXT" $CFG || echo "(none)"
+          echo "--- build_policy.c: HMBIRD 引用 ---"
+          grep -n "HMBIRD_SCHED" kernel/sched/build_policy.c || echo "(none)"
+          if [ "${{ env.ENABLE_SCX }}" = "true" ] && [ "${{ env.SCHED_FILE }}" != "none" ]; then
+            if ! grep -q "^CONFIG_HMBIRD_SCHED=y" $CFG; then
+              echo "!! CONFIG_HMBIRD_SCHED 未生效 -> 强制修正"
+              sed -i '/^CONFIG_SLIM_SCHED/d;/^CONFIG_SCHED_CLASS_EXT/d' $CFG
+              sed -i '1i CONFIG_HMBIRD_SCHED=y' $CFG
+            fi
+            echo "--- 修正后 ---"
+            grep -n "HMBIRD\|SLIM_SCHED\|SCHED_CLASS_EXT" $CFG || echo "(none)"
+          fi
       - name: 📥 Start build timer (构建计时开始)
         run: 
           echo "BUILD_START=$(date +%s)" >> $GITHUB_ENV
